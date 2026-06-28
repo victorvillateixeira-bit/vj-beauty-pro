@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VJ Beauty Pro - Gestão Premium de Salon">
+    <meta name="theme-color" content="#ff6b9d">
+    <title>VJ Beauty Pro 💅</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #ff6b9d;
+            --primary-dark: #d94f7d;
+            --secondary: #0f4c81;
+            --accent: #ffd700;
+            --bg-dark: #0a0e27;
+            --bg-darker: #050812;
+            --bg-card: #1a1f3a;
+            --bg-card-light: #252d4a;
+            --text-primary: #f0f6fc;
+            --text-secondary: #a8b5c8;
+            --border: #2d3447;
+            --success: #3fb950;
+            --danger: #f85149;
+            --shadow: 0 8px 32px rgba(255, 107, 157, 0.15);
+        }
+        
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(15, 76, 129, 0.1) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-title p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sync-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .sync-badge.online {
+            background: rgba(63, 185, 80, 0.1);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .nav {
+            display: flex;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(26, 31, 58, 0.5);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 40px rgba(255, 107, 157, 0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            opacity: 0.9;
+        }
+
+        .card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 12px 40px rgba(255, 107, 157, 0.15);
+        }
+
+        .card h3 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .client-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .client-card:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .client-avatar {
+            width: 100px;
+            height: 100px;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+        }
+
+        .client-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .client-info {
+            flex: 1;
+        }
+
+        .client-info h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .client-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            gap: 6px;
+        }
+
+        .badge.success {
+            background: var(--success);
+        }
+
+        .badge.warning {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .badge.info {
+            background: var(--secondary);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5, 8, 18, 0.8);
+            z-index: 1000;
+            align-items: flex-end;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            border-radius: 24px 24px 0 0;
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
+
+        .modal-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: rgba(10, 14, 39, 0.5);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(10, 14, 39, 0.8);
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
+
+        .photo-upload {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .photo-preview {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 3px dashed var(--primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 107, 157, 0.08);
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .photo-preview:hover {
+            border-color: var(--accent);
+            background: rgba(255, 107, 157, 0.15);
+            transform: scale(1.02);
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-preview-empty {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .photo-preview-empty-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            padding: 20px;
+        }
+
+        .login-box {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-light) 100%);
+            padding: 48px 32px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            max-width: 400px;
+            width: 100%;
+            box-shadow: var(--shadow);
+        }
+
+        .login-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            margin: 0 auto 32px;
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.3);
+        }
+
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .table th {
+            background: rgba(10, 14, 39, 0.5);
+            padding: 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 16px; }
+            .header h1 { font-size: 18px; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .section h2 { font-size: 24px; }
+            .modal-content { border-radius: 16px; }
+            .quick-actions { grid-template-columns: 1fr; }
+            .client-card { flex-direction: column; align-items: center; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header" id="header" style="display:none">
+        <div class="header-logo">
+            <div class="logo-img">VJ</div>
+            <div class="header-title">
+                <h1>VJ Beauty Pro</h1>
+                <p>Gestão Premium de Salon</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="sync-badge online" id="sync-badge">
+                <span>🟢</span>
+                <span>Online</span>
+            </div>
+            <span id="user-email" style="font-size:12px;color:var(--text-secondary);max-width:150px;overflow:hidden;text-overflow:ellipsis"></span>
+            <button onclick="app.handleLogout()" style="background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:20px">🚪</button>
+        </div>
+    </header>
+
+    <nav class="nav" id="nav" style="display:none">
+        <button class="nav-btn active" data-section="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-section="clients">👥 Clientes</button>
+        <button class="nav-btn" data-section="schedule">📅 Agenda</button>
+        <button class="nav-btn" data-section="attendance">✂️ Atendimentos</button>
+        <button class="nav-btn" data-section="points">⭐ Pontos</button>
+        <button class="nav-btn" data-section="reports">📈 Relatórios</button>
+        <button class="nav-btn" data-section="team">👨‍💼 Equipe</button>
+    </nav>
+
+    <div class="container" id="main-container" style="display:none">
+        <!-- DASHBOARD -->
+        <section class="section active" id="dashboard">
+            <h2>Dashboard</h2>
+            <p class="section-subtitle">Bem-vinda ao seu salon, Júlia! 💅</p>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">👥 Total de Clientes</div>
+                    <div class="stat-value" id="stat-clients">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📅 Agendamentos Hoje</div>
+                    <div class="stat-value" id="stat-today">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">💰 Receita (Mês)</div>
+                    <div class="stat-value" id="stat-revenue">R$ 0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">👩‍💼 Profissionais</div>
+                    <div class="stat-value" id="stat-team">0</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <button class="btn btn-primary btn-block" onclick="app.openModal('newClient')">➕ Novo Cliente</button>
+                <button class="btn btn-primary btn-block" onclick="app.openModal('newAppointment')">📅 Agendar</button>
+            </div>
+
+            <h3 style="font-size:18px;margin-top:28px;margin-bottom:16px;font-weight:700">Próximos Agendamentos Hoje</h3>
+            <div id="dashboard-schedule" class="empty">
+                <div class="empty-icon">📅</div>
+                <p>Nenhum agendamento para hoje</p>
+            </div>
+        </section>
+
+        <!-- CLIENTES -->
+        <section class="section" id="clients">
+            <h2>Clientes</h2>
+            <p class="section-subtitle">Gerencie suas clientes com fotos e informações</p>
+            <input type="text" id="client-search" placeholder="🔍 Buscar por nome..." oninput="app.searchClients()" style="margin-bottom:16px">
+            <button class="btn btn-primary btn-block" onclick="app.openModal('newClient')">➕ Adicionar Novo Cliente</button>
+            <div style="margin-top:24px" id="clients-list" class="empty">
+                <div class="empty-icon">👥</div>
+                <p>Nenhum cliente cadastrado ainda</p>
+            </div>
+        </section>
+
+        <!-- AGENDA -->
+        <section class="section" id="schedule">
+            <h2>Agenda</h2>
+            <p class="section-subtitle">Visualize e organize seus agendamentos</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div>
+                    <label>Data</label>
+                    <input type="date" id="schedule-date" onchange="app.filterSchedule()">
+                </div>
+                <div>
+                    <label>Profissional</label>
+                    <select id="schedule-professional" onchange="app.filterSchedule()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+            </div>
+            <div id="schedule-list" class="empty">
+                <div class="empty-icon">📅</div>
+                <p>Nenhum agendamento</p>
+            </div>
+        </section>
+
+        <!-- ATENDIMENTOS -->
+        <section class="section" id="attendance">
+            <h2>Atendimentos</h2>
+            <p class="section-subtitle">Registre e acompanhe cada atendimento</p>
+            <button class="btn btn-primary btn-block" onclick="app.openModal('newAttendance')">➕ Registrar Atendimento</button>
+            <div style="margin-top:24px" id="attendance-list" class="empty">
+                <div class="empty-icon">✂️</div>
+                <p>Nenhum atendimento registrado</p>
+            </div>
+        </section>
+
+        <!-- PONTOS -->
+        <section class="section" id="points">
+            <h2>Programa de Pontos</h2>
+            <p class="section-subtitle">Recompense suas clientes fiéis</p>
+            <div class="card" style="border-left:4px solid var(--accent);background:linear-gradient(135deg,rgba(255,215,0,0.05),rgba(255,107,157,0.05))">
+                <h3>📊 Tabela de Pontos</h3>
+                <table class="table">
+                    <tr>
+                        <td>💇‍♀️ Mecha</td>
+                        <td><span class="badge">30 pts</span></td>
+                    </tr>
+                    <tr>
+                        <td>🧴 Progressiva</td>
+                        <td><span class="badge">20 pts</span></td>
+                    </tr>
+                    <tr>
+                        <td>💆‍♀️ Tratamento</td>
+                        <td><span class="badge">10 pts</span></td>
+                    </tr>
+                    <tr>
+                        <td>✂️ Corte</td>
+                        <td><span class="badge">5 pts</span></td>
+                    </tr>
+                    <tr>
+                        <td>💇 Escova</td>
+                        <td><span class="badge">5 pts</span></td>
+                    </tr>
+                </table>
+                <p style="margin-top:16px;padding:12px;background:rgba(63,185,80,0.1);border-radius:10px;border-left:3px solid var(--success);color:var(--success);font-weight:600;font-size:13px">⭐ 50 pontos = 20% desconto na próxima compra</p>
+            </div>
+            <h3 style="font-size:18px;margin-top:28px;margin-bottom:16px;font-weight:700">🏆 Top Clientes</h3>
+            <div id="points-list" class="empty">
+                <div class="empty-icon">⭐</div>
+                <p>Sem histórico de pontos</p>
+            </div>
+        </section>
+
+        <!-- RELATÓRIOS -->
+        <section class="section" id="reports">
+            <h2>Relatórios</h2>
+            <p class="section-subtitle">Acompanhe o desempenho do seu salon</p>
+            <label>Período</label>
+            <select id="report-period" onchange="app.updateReports()" style="margin-bottom:24px">
+                <option value="today">Hoje</option>
+                <option value="week">Esta Semana</option>
+                <option value="month" selected>Este Mês</option>
+            </select>
+            
+            <h3 style="font-size:18px;margin-top:24px;margin-bottom:16px;font-weight:700">💼 Por Profissional</h3>
+            <div id="report-team" class="empty"><div class="empty-icon">📈</div><p>Sem dados</p></div>
+
+            <h3 style="font-size:18px;margin-top:28px;margin-bottom:16px;font-weight:700">✂️ Por Serviço</h3>
+            <div id="report-service" class="empty"><div class="empty-icon">📊</div><p>Sem dados</p></div>
+
+            <div style="margin-top:28px">
+                <button class="btn btn-primary btn-block" onclick="app.exportData()">📥 Exportar Dados</button>
+            </div>
+        </section>
+
+        <!-- EQUIPE -->
+        <section class="section" id="team">
+            <h2>Equipe</h2>
+            <p class="section-subtitle">Gerencie seus profissionais</p>
+            <button class="btn btn-primary btn-block" onclick="app.openModal('newTeamMember')">➕ Adicionar Profissional</button>
+            <div style="margin-top:24px" id="team-list" class="empty">
+                <div class="empty-icon">👨‍💼</div>
+                <p>Nenhum profissional cadastrado</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="login-container" id="login-container">
+        <div class="login-box">
+            <div class="login-logo">VJ</div>
+            <h1>VJ Beauty Pro</h1>
+            <p class="login-subtitle">Gestão Premium de Salon</p>
+            <div id="auth-message" style="text-align:center;margin-bottom:20px;color:var(--danger);font-size:12px;display:none"></div>
+            
+            <div id="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" placeholder="Sua senha">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="app.handleLogin()">Entrar</button>
+                <button class="btn btn-secondary btn-block" onclick="app.toggleSignup(true)">Criar Conta</button>
+                <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:20px">Dados salvos com segurança no seu salon 🔒</p>
+            </div>
+
+            <div id="signup-form" style="display:none">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signup-email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="signup-password" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="app.handleSignup()">Criar Conta</button>
+                <button class="btn btn-secondary btn-block" onclick="app.toggleSignup(false)">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAIS -->
+    <div class="modal" id="modal-newClient">
+        <div class="modal-content">
+            <div class="modal-header"><h2>✨ Novo Cliente</h2></div>
+            <form onsubmit="app.saveClient(event)">
+                <div class="photo-upload">
+                    <div class="photo-preview" id="photo-preview-new" onclick="document.getElementById('client-photo').click()">
+                        <div class="photo-preview-empty">
+                            <div class="photo-preview-empty-icon">📸</div>
+                            <p>Clique para adicionar foto</p>
+                        </div>
+                    </div>
+                    <input type="file" id="client-photo" accept="image/*" onchange="app.previewPhoto(event, 'photo-preview-new')">
+                </div>
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" id="client-name" required placeholder="Ex: Maria Silva">
+                </div>
+                <div class="form-group">
+                    <label>Telefone / WhatsApp</label>
+                    <input type="tel" id="client-phone" placeholder="(21) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="client-email" placeholder="email@exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label>Data de Nascimento</label>
+                    <input type="date" id="client-birth">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-block" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-block">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-newAppointment">
+        <div class="modal-content">
+            <div class="modal-header"><h2>📅 Novo Agendamento</h2></div>
+            <form onsubmit="app.saveAppointment(event)">
+                <div class="form-group">
+                    <label>Cliente *</label>
+                    <select id="appt-client" required>
+                        <option value="">Selecione a cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Profissional *</label>
+                    <select id="appt-professional" required>
+                        <option value="">Selecione o profissional</option>
+                    </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label>Data *</label>
+                        <input type="date" id="appt-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" id="appt-time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Serviço</label>
+                    <input type="text" id="appt-service" placeholder="Ex: Corte, Mecha, Progressiva...">
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="appt-notes" placeholder="Notas importantes..." style="min-height:80px"></textarea>
+                </div>
+                <label style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(37,211,102,0.1);border-radius:10px;border:1px solid rgba(37,211,102,0.3);">
+                    <input type="checkbox" id="appt-send-msg" style="width:auto"> Enviar aviso por WhatsApp
+                </label>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-block" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-block">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-newAttendance">
+        <div class="modal-content">
+            <div class="modal-header"><h2>✂️ Registrar Atendimento</h2></div>
+            <form onsubmit="app.saveAttendance(event)">
+                <div class="form-group">
+                    <label>Cliente *</label>
+                    <select id="att-client" required>
+                        <option value="">Selecione a cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Profissional *</label>
+                    <select id="att-professional" required>
+                        <option value="">Selecione o profissional</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data *</label>
+                    <input type="date" id="att-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Serviço *</label>
+                    <select id="att-service" required>
+                        <option value="">Selecione...</option>
+                        <option value="Mecha">💇‍♀️ Mecha (30 pts)</option>
+                        <option value="Progressiva">🧴 Progressiva (20 pts)</option>
+                        <option value="Tratamento">💆‍♀️ Tratamento (10 pts)</option>
+                        <option value="Corte">✂️ Corte (5 pts)</option>
+                        <option value="Escova">💇 Escova (5 pts)</option>
+                        <option value="Produto">🛍️ Produto (5 pts)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$) *</label>
+                    <input type="number" id="att-value" step="0.01" required placeholder="0.00">
+                </div>
+                <label style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,215,0,0.1);border-radius:10px;border:1px solid rgba(255,215,0,0.3);">
+                    <input type="checkbox" id="att-use-discount" style="width:auto"> Aplicar desconto (50 pts = 20%)
+                </label>
+                <div class="form-group" style="margin-top:16px">
+                    <label>Observações</label>
+                    <textarea id="att-notes" placeholder="Como foi o atendimento?" style="min-height:80px"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-block" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-block">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-newTeamMember">
+        <div class="modal-content">
+            <div class="modal-header"><h2>👩‍💼 Novo Profissional</h2></div>
+            <form onsubmit="app.saveTeamMember(event)">
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" id="team-name" required placeholder="Ex: Ana Silva">
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="team-phone" placeholder="(21) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label>Especialidade</label>
+                    <input type="text" id="team-specialty" placeholder="Ex: Cabeleireira, Manicure...">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-block" onclick="app.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-block">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'SEU_URL_AQUI'; // Substitua com sua URL
+        const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI'; // Substitua com sua ANON KEY
+
+        const app = {
+            supabase: null,
+            currentUser: null,
+            data: { clients: [], appointments: [], attendances: [], team: [] },
+
+            async init() {
+                if (SUPABASE_URL === 'SEU_URL_AQUI') {
+                    this.showLocalStorageMode();
+                    return;
+                }
+
+                const { createClient } = window.supabase;
+                this.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                this.loadFromLocalStorage();
+                await this.checkAuth();
+                this.setupEventListeners();
+                this.setupOnlineDetection();
+                
+                if (this.currentUser) {
+                    this.showApp();
+                    if (this.supabase) await this.loadFromSupabase();
+                    this.updateDashboard();
+                }
+            },
+
+            showLocalStorageMode() {
+                this.loadFromLocalStorage();
+                this.checkAuthLocal();
+                this.setupEventListeners();
+                this.setupOnlineDetection();
+                
+                if (this.currentUser) {
+                    this.showApp();
+                    this.updateDashboard();
+                }
+            },
+
+            setupOnlineDetection() {
+                const updateStatus = () => {
+                    const badge = document.getElementById('sync-badge');
+                    if (navigator.onLine) {
+                        badge.className = 'sync-badge online';
+                        badge.innerHTML = '<span>🟢</span><span>Online</span>';
+                    } else {
+                        badge.className = 'sync-badge';
+                        badge.innerHTML = '<span>🔴</span><span>Offline</span>';
+                    }
+                };
+                
+                window.addEventListener('online', updateStatus);
+                window.addEventListener('offline', updateStatus);
+                updateStatus();
+            },
+
+            loadFromLocalStorage() {
+                const stored = localStorage.getItem('vjbeauty_data');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    this.data = parsed.data || this.data;
+                    this.currentUser = parsed.currentUser;
+                }
+            },
+
+            saveToLocalStorage() {
+                localStorage.setItem('vjbeauty_data', JSON.stringify({
+                    currentUser: this.currentUser,
+                    data: this.data
+                }));
+            },
+
+            async checkAuth() {
+                try {
+                    const { data: { user } } = await this.supabase.auth.getUser();
+                    this.currentUser = user;
+                    if (user) {
+                        document.getElementById('user-email').textContent = user.email;
+                    } else {
+                        this.showLogin();
+                    }
+                } catch {
+                    this.showLogin();
+                }
+            },
+
+            checkAuthLocal() {
+                const user = localStorage.getItem('vjbeauty_user');
+                if (user) {
+                    this.currentUser = JSON.parse(user);
+                    document.getElementById('user-email').textContent = this.currentUser.email;
+                } else {
+                    this.showLogin();
+                }
+            },
+
+            async loadFromSupabase() {
+                if (!this.supabase) return;
+                try {
+                    const { data: clients } = await this.supabase.from('clients').select('*').eq('salon_id', this.currentUser.id);
+                    const { data: appointments } = await this.supabase.from('appointments').select('*').eq('salon_id', this.currentUser.id);
+                    const { data: attendances } = await this.supabase.from('attendances').select('*').eq('salon_id', this.currentUser.id);
+                    const { data: team } = await this.supabase.from('team').select('*').eq('salon_id', this.currentUser.id);
+                    
+                    this.data.clients = clients || [];
+                    this.data.appointments = appointments || [];
+                    this.data.attendances = attendances || [];
+                    this.data.team = team || [];
+                    
+                    this.saveToLocalStorage();
+                } catch (error) {
+                    console.error('Erro ao carregar Supabase:', error);
+                }
+            },
+
+            showApp() {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('header').style.display = 'flex';
+                document.getElementById('nav').style.display = 'flex';
+                document.getElementById('main-container').style.display = 'block';
+            },
+
+            showLogin() {
+                document.getElementById('login-container').style.display = 'flex';
+                document.getElementById('header').style.display = 'none';
+                document.getElementById('nav').style.display = 'none';
+                document.getElementById('main-container').style.display = 'none';
+            },
+
+            toggleSignup(show) {
+                document.getElementById('login-form').style.display = show ? 'none' : 'block';
+                document.getElementById('signup-form').style.display = show ? 'block' : 'none';
+            },
+
+            async handleLogin() {
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+
+                if (this.supabase) {
+                    try {
+                        const { error } = await this.supabase.auth.signInWithPassword({ email, password });
+                        if (error) {
+                            document.getElementById('auth-message').style.display = 'block';
+                            document.getElementById('auth-message').textContent = 'Email ou senha incorretos';
+                            return;
+                        }
+                        location.reload();
+                    } catch (err) {
+                        document.getElementById('auth-message').style.display = 'block';
+                        document.getElementById('auth-message').textContent = 'Erro ao fazer login';
+                    }
+                } else {
+                    this.currentUser = { email, id: Date.now() };
+                    localStorage.setItem('vjbeauty_user', JSON.stringify(this.currentUser));
+                    this.showApp();
+                    this.updateDashboard();
+                }
+            },
+
+            async handleSignup() {
+                const email = document.getElementById('signup-email').value.trim();
+                const password = document.getElementById('signup-password').value;
+
+                if (!email || password.length < 6) {
+                    alert('Email válido e senha com 6+ caracteres');
+                    return;
+                }
+
+                if (this.supabase) {
+                    try {
+                        const { error } = await this.supabase.auth.signUp({ email, password });
+                        if (error) {
+                            document.getElementById('auth-message').style.display = 'block';
+                            document.getElementById('auth-message').textContent = error.message;
+                            return;
+                        }
+                        alert('Conta criada! Verifique seu email para confirmar.');
+                        this.toggleSignup(false);
+                    } catch (err) {
+                        alert('Erro ao criar conta');
+                    }
+                } else {
+                    this.currentUser = { email, id: Date.now() };
+                    localStorage.setItem('vjbeauty_user', JSON.stringify(this.currentUser));
+                    this.showApp();
+                    this.updateDashboard();
+                }
+            },
+
+            async handleLogout() {
+                if (this.supabase) {
+                    await this.supabase.auth.signOut();
+                }
+                localStorage.removeItem('vjbeauty_user');
+                localStorage.removeItem('vjbeauty_data');
+                location.reload();
+            },
+
+            setupEventListeners() {
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.showSection(e.target.dataset.section);
+                    });
+                });
+            },
+
+            showSection(section) {
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section).classList.add('active');
+                
+                if (section === 'clients') this.renderClients();
+                if (section === 'schedule') { this.renderSchedule(); this.populateScheduleProfessionals(); }
+                if (section === 'attendance') this.renderAttendances();
+                if (section === 'points') this.renderPoints();
+                if (section === 'reports') this.updateReports();
+                if (section === 'team') this.renderTeam();
+            },
+
+            openModal(type) {
+                const modal = document.getElementById(`modal-${type}`);
+                if (modal) {
+                    modal.classList.add('active');
+                    this.populateSelects(type);
+                }
+            },
+
+            closeModal() {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+                document.querySelectorAll('form').forEach(f => f.reset());
+                document.querySelectorAll('.photo-preview').forEach(p => {
+                    if (p.id === 'photo-preview-new') {
+                        p.innerHTML = '<div class="photo-preview-empty"><div class="photo-preview-empty-icon">📸</div><p>Clique para adicionar foto</p></div>';
+                    }
+                });
+            },
+
+            previewPhoto(event, previewId) {
+                const file = event.target.files[0];
+                const preview = document.getElementById(previewId);
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+                        preview.dataset.photo = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+
+            populateSelects(type) {
+                if (type === 'newAppointment' || type === 'newAttendance') {
+                    const clientSelect = document.getElementById(type === 'newAppointment' ? 'appt-client' : 'att-client');
+                    const profSelect = document.getElementById(type === 'newAppointment' ? 'appt-professional' : 'att-professional');
+                    
+                    clientSelect.innerHTML = '<option value="">Selecione a cliente</option>' + 
+                        this.data.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    
+                    profSelect.innerHTML = '<option value="">Selecione o profissional</option>' + 
+                        this.data.team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                }
+            },
+
+            populateScheduleProfessionals() {
+                const select = document.getElementById('schedule-professional');
+                select.innerHTML = '<option value="">Todos</option>' + 
+                    this.data.team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            },
+
+            async saveClient(e) {
+                e.preventDefault();
+                const photoData = document.getElementById('photo-preview-new').dataset.photo;
+                
+                const client = {
+                    id: Date.now(),
+                    name: document.getElementById('client-name').value,
+                    phone: document.getElementById('client-phone').value,
+                    email: document.getElementById('client-email').value,
+                    birth_date: document.getElementById('client-birth').value,
+                    photo: photoData || null,
+                    points: 0,
+                    created_at: new Date().toISOString()
+                };
+
+                if (this.supabase && this.currentUser) {
+                    try {
+                        const { error } = await this.supabase.from('clients').insert([{
+                            ...client,
+                            salon_id: this.currentUser.id
+                        }]);
+                        if (error) throw error;
+                    } catch (err) {
+                        console.error('Erro ao salvar:', err);
+                    }
+                }
+
+                this.data.clients.push(client);
+                this.saveToLocalStorage();
+                this.closeModal();
+                this.renderClients();
+                this.updateDashboard();
+            },
+
+            async saveAppointment(e) {
+                e.preventDefault();
+                const appointment = {
+                    id: Date.now(),
+                    client_id: parseInt(document.getElementById('appt-client').value),
+                    professional_id: parseInt(document.getElementById('appt-professional').value),
+                    appointment_date: document.getElementById('appt-date').value,
+                    appointment_time: document.getElementById('appt-time').value,
+                    service: document.getElementById('appt-service').value,
+                    notes: document.getElementById('appt-notes').value,
+                    status: 'scheduled',
+                    created_at: new Date().toISOString()
+                };
+
+                if (this.supabase && this.currentUser) {
+                    try {
+                        const { error } = await this.supabase.from('appointments').insert([{
+                            ...appointment,
+                            salon_id: this.currentUser.id
+                        }]);
+                        if (error) throw error;
+                    } catch (err) {
+                        console.error('Erro ao salvar:', err);
+                    }
+                }
+
+                this.data.appointments.push(appointment);
+                this.saveToLocalStorage();
+
+                if (document.getElementById('appt-send-msg').checked) {
+                    const client = this.data.clients.find(c => c.id === appointment.client_id);
+                    if (client && client.phone) {
+                        this.sendWhatsAppMessage(client.phone, appointment);
+                    }
+                }
+
+                this.closeModal();
+                this.updateDashboard();
+            },
+
+            sendWhatsAppMessage(phone, appointment) {
+                const date = new Date(appointment.appointment_date + 'T' + appointment.appointment_time);
+                const formatted = date.toLocaleDateString('pt-BR') + ' às ' + appointment.appointment_time;
+                const msg = `Olá! 💅 Confirme seu agendamento para ${formatted}. Serviço: ${appointment.service || 'Sem especificação'}. Obrigada!`;
+                const wa_url = `https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+                window.open(wa_url, '_blank');
+            },
+
+            async saveAttendance(e) {
+                e.preventDefault();
+                const clientId = parseInt(document.getElementById('att-client').value);
+                const service = document.getElementById('att-service').value;
+                const pointsMap = { 'Mecha': 30, 'Progressiva': 20, 'Tratamento': 10, 'Corte': 5, 'Escova': 5, 'Produto': 5 };
+                const points = pointsMap[service] || 0;
+                
+                const attendance = {
+                    id: Date.now(),
+                    client_id: clientId,
+                    professional_id: parseInt(document.getElementById('att-professional').value),
+                    attendance_date: document.getElementById('att-date').value,
+                    service: service,
+                    value: parseFloat(document.getElementById('att-value').value),
+                    discount_applied: document.getElementById('att-use-discount').checked,
+                    points_earned: points,
+                    notes: document.getElementById('att-notes').value,
+                    created_at: new Date().toISOString()
+                };
+
+                if (this.supabase && this.currentUser) {
+                    try {
+                        const { error } = await this.supabase.from('attendances').insert([{
+                            ...attendance,
+                            salon_id: this.currentUser.id
+                        }]);
+                        if (error) throw error;
+                    } catch (err) {
+                        console.error('Erro ao salvar:', err);
+                    }
+                }
+
+                this.data.attendances.push(attendance);
+
+                const client = this.data.clients.find(c => c.id === clientId);
+                if (client) {
+                    if (attendance.discount_applied && client.points >= 50) {
+                        client.points -= 50;
+                    } else {
+                        client.points += points;
+                    }
+                }
+
+                this.saveToLocalStorage();
+                this.closeModal();
+                this.renderAttendances();
+                this.updateDashboard();
+                this.updateReports();
+            },
+
+            async saveTeamMember(e) {
+                e.preventDefault();
+                const member = {
+                    id: Date.now(),
+                    name: document.getElementById('team-name').value,
+                    phone: document.getElementById('team-phone').value,
+                    specialty: document.getElementById('team-specialty').value,
+                    created_at: new Date().toISOString()
+                };
+
+                if (this.supabase && this.currentUser) {
+                    try {
+                        const { error } = await this.supabase.from('team').insert([{
+                            ...member,
+                            salon_id: this.currentUser.id
+                        }]);
+                        if (error) throw error;
+                    } catch (err) {
+                        console.error('Erro ao salvar:', err);
+                    }
+                }
+
+                this.data.team.push(member);
+                this.saveToLocalStorage();
+                this.closeModal();
+                this.renderTeam();
+                this.populateScheduleProfessionals();
+            },
+
+            renderClients() {
+                const list = document.getElementById('clients-list');
+                if (this.data.clients.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><p>Nenhum cliente cadastrado</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.clients.map(c => `
+                    <div class="client-card">
+                        <div class="client-avatar">
+                            ${c.photo ? `<img src="${c.photo}" alt="${c.name}">` : c.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="client-info" style="flex:1">
+                            <h4>${c.name}</h4>
+                            <p>${c.phone || 'Sem telefone'}</p>
+                            ${c.birth_date ? `<p style="font-size:11px">🎂 ${new Date(c.birth_date).toLocaleDateString('pt-BR')}</p>` : ''}
+                            <div class="client-actions">
+                                <span class="badge">${c.points} pts</span>
+                                ${c.phone ? `<a href="https://wa.me/55${c.phone.replace(/\D/g, '')}" target="_blank" class="btn btn-whatsapp btn-small">💬</a>` : ''}
+                                <button class="btn btn-secondary btn-small" onclick="app.deleteClient(${c.id})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            searchClients() {
+                const search = document.getElementById('client-search').value.toLowerCase();
+                const filtered = this.data.clients.filter(c => c.name.toLowerCase().includes(search));
+                const list = document.getElementById('clients-list');
+                
+                if (filtered.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Nenhum cliente encontrado</p></div>';
+                    return;
+                }
+
+                list.innerHTML = filtered.map(c => `
+                    <div class="client-card">
+                        <div class="client-avatar">
+                            ${c.photo ? `<img src="${c.photo}" alt="${c.name}">` : c.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="client-info" style="flex:1">
+                            <h4>${c.name}</h4>
+                            <p>${c.phone || 'Sem telefone'}</p>
+                            <div class="client-actions">
+                                <span class="badge">${c.points} pts</span>
+                                ${c.phone ? `<a href="https://wa.me/55${c.phone.replace(/\D/g, '')}" target="_blank" class="btn btn-whatsapp btn-small">💬</a>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderSchedule() {
+                let appointments = this.data.appointments;
+                const dateFilter = document.getElementById('schedule-date')?.value;
+                const profFilter = document.getElementById('schedule-professional')?.value;
+                
+                if (dateFilter) appointments = appointments.filter(a => a.appointment_date === dateFilter);
+                if (profFilter) appointments = appointments.filter(a => a.professional_id == profFilter);
+                
+                const list = document.getElementById('schedule-list');
+                if (appointments.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><p>Nenhum agendamento</p></div>';
+                    return;
+                }
+
+                list.innerHTML = appointments.sort((a, b) => 
+                    new Date(a.appointment_date + 'T' + a.appointment_time) - new Date(b.appointment_date + 'T' + b.appointment_time)
+                ).map(a => {
+                    const client = this.data.clients.find(c => c.id === a.client_id);
+                    const prof = this.data.team.find(p => p.id === a.professional_id);
+                    return `
+                        <div class="card">
+                            <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center">
+                                <div class="client-avatar" style="width:120px;height:120px;font-size:40px">
+                                    ${client?.photo ? `<img src="${client.photo}" alt="">` : client?.name?.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 style="font-size:18px">${client?.name || 'Cliente'}</h3>
+                                    <p style="font-size:13px;margin:4px 0">${prof?.name || 'Profissional'}</p>
+                                    <p style="font-size:13px;color:var(--text-secondary);margin:4px 0">${a.service || 'Serviço'}</p>
+                                    <p style="font-weight:700;color:var(--primary);margin-top:12px;font-size:16px">📅 ${a.appointment_date} às ${a.appointment_time}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            filterSchedule() {
+                this.renderSchedule();
+            },
+
+            renderAttendances() {
+                const list = document.getElementById('attendance-list');
+                if (this.data.attendances.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">✂️</div><p>Nenhum atendimento registrado</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.attendances.slice().reverse().map(a => {
+                    const client = this.data.clients.find(c => c.id === a.client_id);
+                    return `
+                        <div class="card">
+                            <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center">
+                                <div class="client-avatar" style="width:120px;height:120px;font-size:40px">
+                                    ${client?.photo ? `<img src="${client.photo}" alt="">` : client?.name?.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 style="font-size:18px">${client?.name || 'Cliente'}</h3>
+                                    <p style="font-size:13px;color:var(--text-secondary);margin:8px 0">${a.service}</p>
+                                    <p style="font-size:16px;font-weight:700;color:var(--primary);margin:8px 0">R$ ${a.value.toFixed(2)}</p>
+                                    <div style="display:flex;gap:8px;margin-top:12px">
+                                        <span class="badge success">+${a.points_earned} pts</span>
+                                        ${a.discount_applied ? '<span class="badge warning">-20%</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderPoints() {
+                const list = document.getElementById('points-list');
+                const clientsWithPoints = this.data.clients.filter(c => c.points > 0).sort((a, b) => b.points - a.points);
+                
+                if (clientsWithPoints.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">⭐</div><p>Sem histórico de pontos</p></div>';
+                    return;
+                }
+
+                list.innerHTML = clientsWithPoints.map((c, i) => {
+                    const canDiscount = c.points >= 50;
+                    const badge = canDiscount ? 
+                        '<span class="badge success">✓ Desconto Disponível</span>' : 
+                        `<span class="badge warning">Faltam ${50 - c.points} pts</span>`;
+                    
+                    return `
+                        <div class="card">
+                            <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center">
+                                <div class="client-avatar" style="width:120px;height:120px;font-size:48px;font-weight:700;background:linear-gradient(135deg,#ff6b9d,#0f4c81)">
+                                    ${c.photo ? `<img src="${c.photo}" alt="">` : `#${i + 1}`}
+                                </div>
+                                <div>
+                                    <h3 style="font-size:18px">#${i + 1} - ${c.name}</h3>
+                                    <p style="font-size:28px;color:var(--accent);font-weight:700;margin:12px 0">⭐ ${c.points} pts</p>
+                                    <div>${badge}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderTeam() {
+                const list = document.getElementById('team-list');
+                if (this.data.team.length === 0) {
+                    list.innerHTML = '<div class="empty"><div class="empty-icon">👨‍💼</div><p>Nenhum profissional cadastrado</p></div>';
+                    return;
+                }
+
+                list.innerHTML = this.data.team.map(m => `
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                            <div>
+                                <h3>${m.name}</h3>
+                                <p>${m.specialty || 'Sem especialidade'}</p>
+                                <p style="font-size:11px;color:var(--text-secondary);margin-top:6px">${m.phone || 'Sem telefone'}</p>
+                            </div>
+                            <button class="btn btn-danger btn-small" onclick="app.deleteTeamMember(${m.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            updateReports() {
+                const period = document.getElementById('report-period')?.value || 'month';
+                const now = new Date();
+                let startDate = new Date();
+                
+                if (period === 'today') {
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (period === 'week') {
+                    startDate.setDate(now.getDate() - now.getDay());
+                } else {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                }
+
+                const filtered = this.data.attendances.filter(a => 
+                    new Date(a.attendance_date) >= startDate
+                );
+
+                const byProf = {};
+                filtered.forEach(a => {
+                    const prof = this.data.team.find(p => p.id === a.professional_id);
+                    const name = prof?.name || 'Desconhecido';
+                    if (!byProf[name]) byProf[name] = { count: 0, revenue: 0 };
+                    byProf[name].count++;
+                    byProf[name].revenue += a.value;
+                });
+
+                const teamList = document.getElementById('report-team');
+                if (Object.keys(byProf).length === 0) {
+                    teamList.innerHTML = '<div class="empty"><div class="empty-icon">📈</div><p>Sem dados</p></div>';
+                } else {
+                    teamList.innerHTML = Object.entries(byProf).map(([name, data]) => `
+                        <div class="card">
+                            <h3>${name}</h3>
+                            <table class="table">
+                                <tr><td>Atendimentos</td><td style="font-weight:700">${data.count}</td></tr>
+                                <tr><td>Receita</td><td style="color:var(--success);font-weight:700">R$ ${data.revenue.toFixed(2)}</td></tr>
+                            </table>
+                        </div>
+                    `).join('');
+                }
+
+                const byService = {};
+                filtered.forEach(a => {
+                    const service = a.service || 'Outro';
+                    if (!byService[service]) byService[service] = { count: 0, revenue: 0 };
+                    byService[service].count++;
+                    byService[service].revenue += a.value;
+                });
+
+                const serviceList = document.getElementById('report-service');
+                if (Object.keys(byService).length === 0) {
+                    serviceList.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><p>Sem dados</p></div>';
+                } else {
+                    serviceList.innerHTML = Object.entries(byService)
+                        .sort((a, b) => b[1].revenue - a[1].revenue)
+                        .map(([service, data]) => `
+                        <div class="card">
+                            <h3>${service}</h3>
+                            <table class="table">
+                                <tr><td>Vendas</td><td style="font-weight:700">${data.count}x</td></tr>
+                                <tr><td>Receita</td><td style="color:var(--success);font-weight:700">R$ ${data.revenue.toFixed(2)}</td></tr>
+                            </table>
+                        </div>
+                    `).join('');
+                }
+            },
+
+            updateDashboard() {
+                document.getElementById('stat-clients').textContent = this.data.clients.length;
+                document.getElementById('stat-team').textContent = this.data.team.length;
+                
+                const today = new Date().toISOString().split('T')[0];
+                const todayAppointments = this.data.appointments.filter(a => a.appointment_date === today);
+                document.getElementById('stat-today').textContent = todayAppointments.length;
+
+                const monthStart = new Date();
+                monthStart.setDate(1);
+                monthStart.setHours(0, 0, 0, 0);
+                const revenue = this.data.attendances
+                    .filter(a => new Date(a.attendance_date) >= monthStart)
+                    .reduce((sum, a) => sum + a.value, 0);
+                document.getElementById('stat-revenue').textContent = 'R$ ' + revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+                const dashboard = document.getElementById('dashboard-schedule');
+                if (todayAppointments.length === 0) {
+                    dashboard.innerHTML = '<div class="empty"><p>Nenhum agendamento para hoje</p></div>';
+                } else {
+                    dashboard.innerHTML = todayAppointments.slice(0, 5).map(a => {
+                        const client = this.data.clients.find(c => c.id === a.client_id);
+                        return `
+                            <div class="card">
+                                <div style="display:grid;grid-template-columns:100px 1fr;gap:12px;align-items:center">
+                                    <div class="client-avatar" style="width:100px;height:100px;font-size:36px">
+                                        ${client?.photo ? `<img src="${client.photo}" alt="">` : client?.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size:16px">${client?.name || 'Cliente'}</h3>
+                                        <p style="font-size:13px;margin:6px 0">⏰ ${a.appointment_time}</p>
+                                        <p style="font-size:12px;color:var(--text-secondary)">${a.service || 'Serviço'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            },
+
+            deleteClient(id) {
+                if (confirm('Tem certeza que quer deletar esta cliente?')) {
+                    this.data.clients = this.data.clients.filter(c => c.id !== id);
+                    this.saveToLocalStorage();
+                    this.renderClients();
+                    this.updateDashboard();
+                }
+            },
+
+            deleteTeamMember(id) {
+                if (confirm('Tem certeza que quer deletar este profissional?')) {
+                    this.data.team = this.data.team.filter(t => t.id !== id);
+                    this.saveToLocalStorage();
+                    this.renderTeam();
+                    this.populateScheduleProfessionals();
+                }
+            },
+
+            exportData() {
+                const dataStr = JSON.stringify(this.data, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `vjbeauty_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
